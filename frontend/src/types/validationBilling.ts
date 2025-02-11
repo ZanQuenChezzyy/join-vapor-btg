@@ -22,6 +22,10 @@ export const paymentSchema = z.object({
         ),
 });
 
+export const discountSchema = z.object({
+    
+})
+
 
 export const viewBillingSchema = z.object({
     email: z.string()

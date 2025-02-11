@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CartItem, Item } from "../types/type"
+import { CartItem, Discount, Item } from "../types/type"
 import apiClient from "../services/apiService";
 import { Link } from "react-router-dom";
 
@@ -10,6 +10,10 @@ export default function MyCartPage() {
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    const [discountCode, setDiscountCode] = useState<string | null>(null);
+    const [appliedDiscount, setAppliedDiscount] = useState<Discount | null>(null);
+    const [discountAmount, setDiscountAmount] = useState<number>(0);
 
     useEffect(() => {
         const savedCart = localStorage.getItem("cart");
@@ -47,6 +51,15 @@ export default function MyCartPage() {
 
                 setItemDetails(validItems);
                 setLoading(false);
+
+                // Check for discount in localStorage
+                const storedDiscountData = JSON.parse(localStorage.getItem("appliedDiscount") || "null");
+
+                if (storedDiscountData) {
+                    setAppliedDiscount(storedDiscountData.discount);
+                    setDiscountAmount(storedDiscountData.discountAmount);
+                    setDiscountCode(storedDiscountData.code);
+                }
             };
 
             fetchItemDetails();
@@ -70,7 +83,18 @@ export default function MyCartPage() {
                 }
                 return item;
             });
+
             localStorage.setItem("cart", JSON.stringify(updatedCart));
+
+            const newSubtotal = updatedCart.reduce((acc, item) => {
+                const itemDetail = itemDetails.find((detail) => detail.id === item.item_id);
+                return acc + (itemDetail ? itemDetail.price * item.quantity : 0);
+            }, 0);
+
+            if (appliedDiscount) {
+                calculateDiscountAmount(appliedDiscount, newSubtotal);
+            }
+
             return updatedCart;
         });
     };
@@ -82,7 +106,29 @@ export default function MyCartPage() {
                     ? { ...item, quantity: item.quantity - 1 }
                     : item
             );
+
             localStorage.setItem("cart", JSON.stringify(updatedCart));
+
+            const newSubtotal = updatedCart.reduce((acc, item) => {
+                const itemDetail = itemDetails.find((detail) => detail.id === item.item_id);
+                return acc + (itemDetail ? itemDetail.price * item.quantity : 0);
+            }, 0);
+
+            // Check applied discount in local storage
+            const storedDiscountData = JSON.parse(localStorage.getItem("appliedDiscount") || "null");
+
+            if (storedDiscountData) {
+                const appliedDiscount = storedDiscountData.discount;
+
+                if (newSubtotal < appliedDiscount.min_order_value) {
+                    setAppliedDiscount(null);
+                    setDiscountAmount(0);
+                    setDiscountCode("");
+                    localStorage.removeItem("appliedDiscount");
+                    alert("Diskon dibatalkan karena subtotal di bawah batas minimum pembelian.");
+                }
+            }
+
             return updatedCart;
         });
     };
@@ -91,9 +137,114 @@ export default function MyCartPage() {
         const updatedCart = cart.filter((item) => item.slug !== slug);
         setCart(updatedCart);
         localStorage.setItem("cart", JSON.stringify(updatedCart));
+
         setItemDetails((prevDetails) =>
             prevDetails.filter((detail) => detail.slug !== slug)
         );
+
+        const newSubtotal = updatedCart.reduce((acc, item) => {
+            const itemDetail = itemDetails.find((detail) => detail.id === item.item_id);
+            return acc + (itemDetail ? itemDetail.price * item.quantity : 0);
+        }, 0);
+
+        if (appliedDiscount) {
+            if (newSubtotal >= appliedDiscount.min_order_value) {
+                calculateDiscountAmount(appliedDiscount, newSubtotal);
+            } else {
+                setAppliedDiscount(null);
+                setDiscountAmount(0);
+                setDiscountCode("");
+                alert("Diskon dibatalkan karena subtotal di bawah batas minimum pembelian.");
+            }
+        }
+    };
+
+    const calculateDiscountAmount = (discount: Discount, updatedSubtotal: number) => {
+        let discountValue = 0;
+
+        if (updatedSubtotal < discount.min_order_value) {
+            alert(`Subtotal Anda belum memenuhi syarat minimum Rp ${discount.min_order_value.toLocaleString()} untuk diskon ini.`);
+            setDiscountAmount(0);
+            setAppliedDiscount(null);
+            setDiscountCode("");
+            return;
+        }
+
+        if (discount.type === 0) {
+            // Diskon Persentase
+            discountValue = (updatedSubtotal * discount.value) / 100;
+        } else if (discount.type === 1) {
+            // Diskon Fixed
+            discountValue = discount.value;
+        }
+
+        if (discount.max_order_value) {
+            discountValue = Math.min(discountValue, discount.max_order_value);
+        }
+
+        setDiscountAmount(discountValue);
+        console.log("Final discount calculated:", discountValue);
+    };
+
+    const handleApplyDiscount = async () => {
+        if (!discountCode) {
+            alert("Masukkan kode diskon terlebih dahulu.");
+            return;
+        }
+
+        try {
+            const response = await apiClient.get(`/discount/${discountCode}`);
+            const discount: Discount = response.data.data;
+
+            if (!discount.is_active) {
+                alert("Kode diskon tidak valid atau sudah tidak aktif.");
+                return;
+            }
+
+            if (subtotal < discount.min_order_value) {
+                alert(`Subtotal Anda belum memenuhi syarat minimum Rp ${discount.min_order_value.toLocaleString()} untuk menggunakan diskon ini.`);
+
+                // Hapus diskon dari localStorage jika subtotal tidak memenuhi syarat
+                localStorage.removeItem("appliedDiscount");
+                setAppliedDiscount(null);
+                setDiscountAmount(0);
+                return;
+            }
+
+            setAppliedDiscount(discount);
+
+            // Hitung nilai diskon langsung dan simpan ke localStorage
+            let discountValue = 0;
+
+            if (discount.type === 0) {
+                // Diskon Persentase
+                discountValue = (subtotal * discount.value) / 100;
+            } else if (discount.type === 1) {
+                // Diskon Fixed
+                discountValue = discount.value;
+            }
+
+            if (discount.max_order_value) {
+                discountValue = Math.min(discountValue, discount.max_order_value);
+            }
+
+            setDiscountAmount(discountValue);
+
+            // Simpan ke localStorage dengan nilai diskon yang telah dihitung
+            const discountData = {
+                code: discountCode,
+                discount: discount,
+                discountAmount: discountValue,
+            };
+
+            localStorage.setItem("appliedDiscount", JSON.stringify(discountData));
+
+            alert("Diskon berhasil diterapkan!");
+            console.log("Discount Response: ", response.data);
+        } catch (error) {
+            console.error("Gagal mendapatkan diskon:", error);
+            alert("Gagal menerapkan diskon.");
+        }
     };
 
     const subtotal = itemDetails.reduce((acc, item) => {
@@ -103,8 +254,8 @@ export default function MyCartPage() {
 
     const totalQuantity = cart.reduce((acc, produk) => acc + produk.quantity, 0);
 
-    const tax = subtotal * 0.03;
-    const total = subtotal + tax;
+    const tax = subtotal * 0.003;
+    const total = subtotal + tax - discountAmount;
 
     if (loading) {
         return <p className="text-center flex justify-center items-center min-h-screen">Memuat...</p>;
@@ -238,18 +389,23 @@ export default function MyCartPage() {
                                 <input
                                     placeholder="(Opsional) Masukkan Kode Diskon"
                                     type="text"
+                                    value={discountCode || ""}
+                                    onChange={(e) => setDiscountCode(e.target.value)}
                                     className="absolute w-full rounded-full bg-[#F6F6F8] py-[14px] pl-4 pr-[92px] font-semibold text-[#030504] placeholder:text-sm placeholder:font-normal placeholder:leading-[21px] placeholder:text-items-grey focus:outline-none"
                                 />
                                 <button
                                     type="button"
+                                    onClick={handleApplyDiscount}
                                     className="absolute right-[6px] top-1/2 -translate-y-1/2 rounded-full bg-items-purple px-[14px] py-2 text-sm font-semibold leading-[21px] text-white"
                                 >
                                     Kirim
                                 </button>
                             </div>
-                            {/* <p className="text-sm leading-[21px] text-[#E70011]">
-                                Lorem tidak valid silahkan coba lagi ya
-                            </p> */}
+                            {appliedDiscount && (
+                                <p className="py-2 text-sm leading-[21px] text-items-grey">
+                                    {appliedDiscount.description}
+                                </p>
+                            )}
                         </div>
                         <div className="box h-[1px] w-full" />
                         <div className="flex items-center justify-between">
@@ -283,7 +439,7 @@ export default function MyCartPage() {
                                 />
                                 <p>Kode Diskon</p>
                             </div>
-                            <strong className="font-semibold">Rp 0</strong>
+                            <strong className="font-semibold">{formatCurrency(discountAmount)}</strong>
                         </div>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-[6px]">
@@ -310,7 +466,7 @@ export default function MyCartPage() {
                             </strong>
                         </div>
                         {cart.length !== 0 && (
-                            <Link to={'/billing'}
+                            <Link to={'/transaction'}
                                 className="flex w-full items-center justify-between rounded-full bg-items-gradient-pink-white px-5 py-[14px] transition-all duration-300 hover:shadow-[0px_6px_22px_0px_#FF4D9E82]"
                             >
                                 <strong className="font-semibold text-white">

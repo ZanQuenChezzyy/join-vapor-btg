@@ -458,7 +458,7 @@ export default function BrowsePage() {
 
                 </div>
             </section>
-            <nav className="fixed bottom-0 left-0 right-0 z-30 mx-auto w-full">
+            {/* <nav className="fixed bottom-0 left-0 right-0 z-30 mx-auto w-full">
                 <div className="mx-auto max-w-[640px]">
                     <div className="h-[89px] bg-white px-[30px] shadow-[0px_-4px_30px_0px_#1107260D]">
                         <ul className="flex justify-between">
@@ -534,7 +534,7 @@ export default function BrowsePage() {
                         </ul>
                     </div>
                 </div>
-            </nav>
+            </nav> */}
         </main>
     )
 }

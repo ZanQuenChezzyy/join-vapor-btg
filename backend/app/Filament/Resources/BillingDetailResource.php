@@ -58,7 +58,7 @@ class BillingDetailResource extends Resource
     public static function updateTotals(Get $get, Set $set)
     {
         $selectedItems = collect($get('transactionDetails'))->filter(fn($item)
-        => !empty($item['item_id']) && !empty($item['quantity']));
+            => !empty($item['item_id']) && !empty($item['quantity']));
 
         $price = Item::find($selectedItems->pluck('item_id'))->pluck('price', 'id');
 
@@ -450,7 +450,7 @@ class BillingDetailResource extends Resource
                     ->label('ID Transaksi'),
                 TextColumn::make('name')
                     ->label('Nama Pelanggan')
-                    ->description(fn(BillingDetail $record): String => $record->email)
+                    ->description(fn(BillingDetail $record): string => $record->email)
                     ->searchable(),
                 TextColumn::make('is_paid')
                     ->label('Pembayaran')

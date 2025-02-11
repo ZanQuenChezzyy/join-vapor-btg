@@ -23,6 +23,8 @@ class BillingDetail extends Model
         'total_tax_amount',
         'on_store',
         'item_trx_id',
+        'discount_id',
+        'discount_amount',
         'payment_proof',
         'is_paid',
     ];
@@ -40,5 +42,10 @@ class BillingDetail extends Model
     public function transactionDetails(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(\App\Models\TransactionDetail::class);
+    }
+
+    public function Discount(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Discount::class, 'discount_id', 'id');
     }
 }

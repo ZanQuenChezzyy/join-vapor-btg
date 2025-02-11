@@ -82,7 +82,7 @@ if ($response === 'y') {
 
         $excludedIndexes = array_map('trim', explode(',', $excludedInput));
         foreach ($excludedIndexes as $index) {
-            $index = (int)$index - 1; // Konversi ke indeks array
+            $index = (int) $index - 1; // Konversi ke indeks array
             if (isset($modelsToProcess[$index])) {
                 $excludedModels[] = $modelsToProcess[$index];
                 unset($modelsToProcess[$index]);
@@ -117,7 +117,7 @@ if ($response !== 'y') {
 
 // Proses pembuatan resource tanpa pertanyaan konfirmasi tambahan
 foreach ($modelsToProcess as $model) {
-    $command = "php artisan make:filament-resource $model --generate --view --soft-deletes";
+    $command = "php artisan make:filament-resource $model --generate --view";
 
     // Menggunakan proc_open untuk memberikan input otomatis
     $descriptorspec = [

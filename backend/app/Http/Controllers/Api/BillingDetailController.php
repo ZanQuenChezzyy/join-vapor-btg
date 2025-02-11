@@ -35,12 +35,19 @@ class BillingDetailController extends Controller
             }
 
             $tax = 0.003 * $totalPrice;
-            $grandTotal = $totalPrice + $tax;
+
+            // Langsung ambil nilai discount_amount dari request
+            $discountAmount = $request->input('discount_amount', 0);
+
+            // Total setelah diskon
+            $grandTotal = max(($totalPrice + $tax) - $discountAmount, 0);
 
             $validatedData['quantity'] = $totalQuantity;
             $validatedData['sub_total_amount'] = $totalPrice;
             $validatedData['total_tax_amount'] = $tax;
             $validatedData['total_amount'] = $grandTotal;
+            $validatedData['discount_id'] = $request->input('discount_id', null);
+            $validatedData['discount_amount'] = $discountAmount;
             $validatedData['is_paid'] = false;
             $validatedData['on_store'] = false;
             $validatedData['item_trx_id'] = BillingDetail::generateUniqueTrxId();

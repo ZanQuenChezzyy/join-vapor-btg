@@ -29,6 +29,8 @@ class StoreBillingDetailRequest extends FormRequest
             'address' => 'required|string|min:10',
             'post_code' => 'required|numeric|min_digits:5|max_digits:5',
             'payment_proof' => 'required|file|mimes:png,jpg, jpeg|max:2048',
+            'discount_id' => 'nullable',
+            'discount_amount' => 'nullable',
             'item_ids' => 'required|array',
             'item_ids.*.id' => 'required|integer|exists:items,id',
             'item_ids.*.quantity' => 'required|integer|min_digits:1|max_digits:999'

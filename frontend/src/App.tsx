@@ -19,9 +19,9 @@ function App() {
         <Route path="/category/:slug" element={<CategoryPage />} />
         <Route path="/brand/:slug" element={<CategoryPage />} />
         <Route path="/cart" element={<MyCartPage />} />
-        <Route path="/billing" element={<BillingPage />} />
+        <Route path="/transaction" element={<BillingPage />} />
         <Route path="/payment" element={<PaymentPage />} />
-        <Route path="/billing-finished" element={<BillingFinishedPage />} />
+        <Route path="/transaction-finished" element={<BillingFinishedPage />} />
         <Route path="/check-transaction" element={<MyOrdersPage />} />
         <Route path="/my-transaction" element={<MyBillingDetailsPage />} />
       </Routes>

@@ -47,6 +47,19 @@ export interface Category {
     popular_items: Item[],
 }
 
+export interface Discount {
+    id: number,
+    code: string,
+    type: number,
+    value: number,
+    min_order_value: number,
+    max_order_value: number,
+    start_date: Date,
+    end_date: Date,
+    description: string,
+    is_active: boolean,
+}
+
 export interface Brand {
     id: number,
     name: string,
@@ -68,6 +81,8 @@ export interface BillingDetails {
     city: string,
     item_trx_id: string,
     quantity: number,
+    discount: Discount[],
+    discount_amount: number,
     is_paid: boolean,
     on_store: boolean,
     sub_total_amount: number,
@@ -94,7 +109,13 @@ export type BillingFormData = {
     name: string,
     email: string,
     phone: string,
-    post_code: number,
+    post_code: string,
     address: string,
     city: string,
+}
+
+export type AppliedDiscount = {
+    code: string,
+    discount: Discount[],
+    discount_amount: number,
 }
