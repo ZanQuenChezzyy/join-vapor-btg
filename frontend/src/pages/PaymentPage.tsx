@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { z } from "zod";
 import apiClient from "../services/apiService";
 import { paymentSchema } from "../types/validationBilling";
+import AccordionSection from "../components/AccordionSection";
 
 type FormData = {
     payment_proof: File | null;
@@ -29,6 +30,8 @@ export default function PaymentPage() {
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
     const [error, setError] = useState<string | null>(null);
+
+    const [fileName, setfileName] = useState<string | null>(null)
 
     const [appliedDiscount, setAppliedDiscount] = useState<Discount | null>(null);
     const [discountAmount, setDiscountAmount] = useState<number>(0);
@@ -105,10 +108,13 @@ export default function PaymentPage() {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files ? e.target.files[0] : null;
+        const fileName = file ? file.name : null;
+        const truncatedFileName = fileName ? fileName.length > 20 ? `${fileName.slice(0, 17)}...` : fileName : null;
         setFormData((prev) => ({
             ...prev,
             payment_proof: file,
         }));
+        setfileName(truncatedFileName);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -159,6 +165,7 @@ export default function PaymentPage() {
             if (response.status === 200 || response.status === 201) {
                 console.log("Transaction response data: ", response.data.data);
                 const itemTrxId = response.data.data.item_trx_id;
+                const email = response.data.data.email;
 
                 if (!itemTrxId) {
                     console.error("Gagal: ID Transaksi tidak diketahui");
@@ -169,7 +176,7 @@ export default function PaymentPage() {
                 localStorage.removeItem("appliedDiscount");
                 setFormData({ payment_proof: null, item_ids: [] });
                 setLoading(false);
-                navigate(`/transaction-finished?trx_id=${itemTrxId}`);
+                navigate(`/transaction-finished?trx_id=${itemTrxId}&email=${email}`);
             } else {
                 console.error("Status Respon yang tidak terduga:", response.status);
                 setLoading(false);
@@ -183,6 +190,10 @@ export default function PaymentPage() {
 
     if (loading) {
         return <p className="text-center flex justify-center items-center min-h-screen">Memuat...</p>;
+    }
+
+    if (successMessage) {
+        return <p className="text-center flex justify-center items-center min-h-screen">Berhasil Mengirim Transaksi</p>;
     }
 
     if (error) {
@@ -260,7 +271,7 @@ export default function PaymentPage() {
                                                 3
                                             </div>
                                             <p className="text-xs font-semibold leading-[18px]">
-                                                Pengiriman
+                                                Selesai
                                             </p>
                                         </div>
                                     </div>
@@ -276,301 +287,213 @@ export default function PaymentPage() {
                     <p className="text-items-grey">Data asli harus diberikan!</p>
                 </div>
             </header>
-            <section id="Informations" className="px-5">
-                <div className="flex flex-col gap-5 rounded-3xl bg-white px-5 py-[30px]">
+            <AccordionSection
+                title="Informasi Pembayaran"
+                subTitle="Sebelum Bayar Silahkan Cek!"
+                iconSrc="/assets/images/icons/information.svg"
+            >
+                {appliedDiscount && (
+                    <span className="text-sm text-[#0C0422] font-semibold">
+                        Kode Diskon : {appliedDiscount.code}
+                    </span>
+                )}
+                <div id="PaymentDetailsJ" className="flex flex-col gap-5">
+                    <div className="box h-[1px] w-full" />
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-[10px]">
+                        <div className="flex items-center gap-[6px]">
                             <img
-                                src="/assets/images/icons/information.svg"
+                                src="/assets/images/icons/list.svg"
                                 alt="icon"
-                                className="size-[38px] shrink-0"
+                                className="size-5 shrink-0"
                             />
-                            <div className="flex flex-col gap-1">
-                                <h3 className="font-semibold text-[#0C0422]">Detail Pembayaran</h3>
-                                <p className="text-sm leading-[21px] text-[#8C8582]">
-                                    Sebelum bayar Silahkan cek!
-                                </p>
-                                {appliedDiscount && (
-                                    <span className="text-sm text-[#0C0422] font-semibold">
-                                        Kode Diskon : {appliedDiscount.code}
-                                    </span>
-                                )}
-                            </div>
+                            <p>Total Kuantitas</p>
                         </div>
-                        <button
-                            type="button"
-                            data-expand="PaymentDetailsJ"
-                            className="shrink-0"
-                        >
-                            <img
-                                src="/assets/images/icons/bottom.svg"
-                                alt="icon"
-                                className="size-6 shrink-0 transition-all duration-300"
-                            />
-                        </button>
+                        <strong className="font-semibold">{totalQuantity} Unit</strong>
                     </div>
-                    <div id="PaymentDetailsJ" className="flex flex-col gap-5">
-                        <div className="box h-[1px] w-full" />
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-[6px]">
-                                <img
-                                    src="/assets/images/icons/list.svg"
-                                    alt="icon"
-                                    className="size-5 shrink-0"
-                                />
-                                <p>Total Kuantitas</p>
-                            </div>
-                            <strong className="font-semibold">{totalQuantity} Unit</strong>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-[6px]">
+                            <img
+                                src="/assets/images/icons/list.svg"
+                                alt="icon"
+                                className="size-5 shrink-0"
+                            />
+                            <p>Sub Total</p>
                         </div>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-[6px]">
-                                <img
-                                    src="/assets/images/icons/list.svg"
-                                    alt="icon"
-                                    className="size-5 shrink-0"
-                                />
-                                <p>Sub Total</p>
-                            </div>
-                            <strong className="font-semibold">{formatCurrency(subtotal)}</strong>
+                        <strong className="font-semibold">{formatCurrency(subtotal)}</strong>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-[6px]">
+                            <img
+                                src="/assets/images/icons/list.svg"
+                                alt="icon"
+                                className="size-5 shrink-0"
+                            />
+                            <p>Pajak 0.3%</p>
                         </div>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-[6px]">
-                                <img
-                                    src="/assets/images/icons/list.svg"
-                                    alt="icon"
-                                    className="size-5 shrink-0"
-                                />
-                                <p>Diskon</p>
-                            </div>
-                            <strong className="font-semibold">{formatCurrency(discountAmount)}</strong>
+                        <strong className="font-semibold">{formatCurrency(tax)}</strong>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-[6px]">
+                            <img
+                                src="/assets/images/icons/list.svg"
+                                alt="icon"
+                                className="size-5 shrink-0"
+                            />
+                            <p>Biaya Pengiriman</p>
                         </div>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-[6px]">
-                                <img
-                                    src="/assets/images/icons/list.svg"
-                                    alt="icon"
-                                    className="size-5 shrink-0"
-                                />
-                                <p>Biaya Pengiriman</p>
-                            </div>
-                            <strong className="font-semibold">Rp 0 (Promo)</strong>
+                        <strong className="font-semibold">Rp 0 (Promo)</strong>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-[6px]">
+                            <img
+                                src="/assets/images/icons/list.svg"
+                                alt="icon"
+                                className="size-5 shrink-0"
+                            />
+                            <p>Diskon</p>
                         </div>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-[6px]">
-                                <img
-                                    src="/assets/images/icons/list.svg"
-                                    alt="icon"
-                                    className="size-5 shrink-0"
-                                />
-                                <p>Pajak 0.3%</p>
-                            </div>
-                            <strong className="font-semibold">{formatCurrency(tax)}</strong>
+                        <strong className="font-semibold text-items-purple">- {formatCurrency(discountAmount)}</strong>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-[6px]">
+                            <img
+                                src="/assets/images/icons/list.svg"
+                                alt="icon"
+                                className="size-5 shrink-0"
+                            />
+                            <p>Total</p>
                         </div>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-[6px]">
-                                <img
-                                    src="/assets/images/icons/list.svg"
-                                    alt="icon"
-                                    className="size-5 shrink-0"
-                                />
-                                <p>Total</p>
-                            </div>
-                            <strong className="text-[22px] font-bold leading-[33px] text-items-pink">
-                                {formatCurrency(total)}
-                            </strong>
-                        </div>
+                        <strong className="text-[22px] font-bold leading-[33px] text-items-pink">
+                            {formatCurrency(total)}
+                        </strong>
                     </div>
                 </div>
-            </section>
-            <section id="TrustedEwallets" className="px-5">
-                <div className="flex flex-col gap-5 rounded-3xl bg-white px-[14px] py-5">
+            </AccordionSection>
+            <AccordionSection
+                title="Dompet Digital"
+                subTitle="Transfer Menggunakan Dompet Digital"
+                iconSrc="/assets/images/icons/wallet.svg"
+            >
+                <div id="TrustedEwalletsJ" className="flex flex-col gap-5">
+                    <div className="box h-[1px] w-full" />
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-[10px]">
+                        <div className="flex items-center gap-4">
                             <img
-                                src="/assets/images/icons/wallet.svg"
-                                alt="icon"
-                                className="size-[38px] shrink-0"
+                                src="/assets/images/thumbnails/link-aja.png"
+                                alt="image"
+                                className="h-[60px] w-[80px] shrink-0"
                             />
-                            <div className="flex flex-col gap-1">
-                                <h3 className="font-semibold text-[#0C0422]">Trusted E-Wallets</h3>
-                                <p className="text-sm leading-[21px] text-[#8C8582]">
-                                    Choose lorem dolor active
+                            <div>
+                                <h4 className="font-semibold">LinkAja Pro</h4>
+                                <p className="text-sm leading-[21px] text-items-grey">
+                                    Offline
                                 </p>
                             </div>
                         </div>
-                        <button
-                            type="button"
-                            data-expand="TrustedEwalletsJ"
-                            className="shrink-0"
-                        >
-                            <img
-                                src="/assets/images/icons/bottom.svg"
-                                alt="icon"
-                                className="size-6 shrink-0 transition-all duration-300"
-                            />
-                        </button>
+                        <span className="rounded-full bg-[#F6F6F8] px-[14px] py-2">
+                            <p className="text-sm font-semibold leading-[21px] text-[#ACACB9]">
+                                Inactive
+                            </p>
+                        </span>
                     </div>
-                    <div id="TrustedEwalletsJ" className="flex flex-col gap-5">
-                        <div className="box h-[1px] w-full" />
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <img
-                                    src="/assets/images/thumbnails/link-aja.png"
-                                    alt="image"
-                                    className="h-[60px] w-[80px] shrink-0"
-                                />
-                                <div>
-                                    <h4 className="font-semibold">LinkAja Pro</h4>
-                                    <p className="text-sm leading-[21px] text-items-grey">
-                                        Offline
-                                    </p>
-                                </div>
-                            </div>
-                            <span className="rounded-full bg-[#F6F6F8] px-[14px] py-2">
-                                <p className="text-sm font-semibold leading-[21px] text-[#ACACB9]">
-                                    Inactive
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <img
+                                src="/assets/images/thumbnails/ovo.png"
+                                alt="image"
+                                className="h-[60px] w-[80px] shrink-0"
+                            />
+                            <div>
+                                <h4 className="font-semibold">OVO Inter</h4>
+                                <p className="text-sm leading-[21px] text-items-grey">
+                                    Offline
                                 </p>
-                            </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <img
-                                    src="/assets/images/thumbnails/ovo.png"
-                                    alt="image"
-                                    className="h-[60px] w-[80px] shrink-0"
-                                />
-                                <div>
-                                    <h4 className="font-semibold">OVO Inter</h4>
-                                    <p className="text-sm leading-[21px] text-items-grey">
-                                        Offline
-                                    </p>
-                                </div>
                             </div>
-                            <span className="rounded-full bg-[#F6F6F8] px-[14px] py-2">
-                                <p className="text-sm font-semibold leading-[21px] text-[#ACACB9]">
-                                    Inactive
-                                </p>
-                            </span>
                         </div>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <img
-                                    src="/assets/images/thumbnails/gopay.png"
-                                    alt="image"
-                                    className="h-[60px] w-[80px] shrink-0"
-                                />
-                                <div>
-                                    <h4 className="font-semibold">Link Aja</h4>
-                                    <p className="text-sm leading-[21px] text-items-grey">
-                                        Offline
-                                    </p>
-                                </div>
+                        <span className="rounded-full bg-[#F6F6F8] px-[14px] py-2">
+                            <p className="text-sm font-semibold leading-[21px] text-[#ACACB9]">
+                                Inactive
+                            </p>
+                        </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <img
+                                src="/assets/images/thumbnails/gopay.png"
+                                alt="image"
+                                className="h-[60px] w-[80px] shrink-0"
+                            />
+                            <div>
+                                <h4 className="font-semibold">Link Aja</h4>
+                                <p className="text-sm leading-[21px] text-items-grey">
+                                    Offline
+                                </p>
                             </div>
-                            <span className="rounded-full bg-[#F6F6F8] px-[14px] py-2">
-                                <p className="text-sm font-semibold leading-[21px] text-[#ACACB9]">
-                                    Inactive
-                                </p>
-                            </span>
                         </div>
+                        <span className="rounded-full bg-[#F6F6F8] px-[14px] py-2">
+                            <p className="text-sm font-semibold leading-[21px] text-[#ACACB9]">
+                                Inactive
+                            </p>
+                        </span>
                     </div>
                 </div>
-            </section>
-            <section id="CasOnDelivery" className="px-5">
-                <div className="flex flex-col gap-5 rounded-3xl bg-white px-[14px] py-5">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-[10px]">
-                            <img
-                                src="/assets/images/icons/cash.svg"
-                                alt="icon"
-                                className="size-[38px] shrink-0"
-                            />
-                            <div className="flex flex-col gap-1">
-                                <h3 className="font-semibold text-[#0C0422]">Cash on Delivery</h3>
-                                <p className="text-sm leading-[21px] text-[#8C8582]">
-                                    Choose lorem dolor active
-                                </p>
-                            </div>
-                        </div>
-                        <button type="button" data-expand="CasOnDeliveryJ" className="shrink-0">
-                            <img
-                                src="/assets/images/icons/bottom.svg"
-                                alt="icon"
-                                className="size-6 shrink-0 transition-all duration-300"
-                            />
-                        </button>
+            </AccordionSection>
+            <AccordionSection
+                title="Qris"
+                subTitle="Transfer Menggunakan Qris"
+                iconSrc="/assets/images/icons/cash.svg"
+            >
+                <div id="CasOnDeliveryJ" className="flex flex-col gap-5">
+                    <div className="box h-[1px] w-full" />
+                    <div className="rounded-2xl bg-[#F6F6F8] p-[10px]">
+                        <p className="text-sm">
+                            Layanan pembayaran ini belum si amet tersedia karena sedang proses
+                            dolor.
+                        </p>
                     </div>
-                    <div id="CasOnDeliveryJ" className="flex flex-col gap-5">
-                        <div className="box h-[1px] w-full" />
-                        <div className="rounded-2xl bg-[#F6F6F8] p-[10px]">
-                            <p className="text-sm">
-                                Layanan pembayaran ini belum si amet tersedia karena sedang proses
-                                dolor.
+                </div>
+            </AccordionSection>
+            <AccordionSection
+                title="Transfer Bank"
+                subTitle="Transfer Menggunakan Bank Tunai"
+                iconSrc="/assets/images/icons/banktf.svg"
+            >
+                <div id="BankTransferJ" className="flex flex-col gap-5">
+                    <div className="box h-[1px] w-full" />
+                    <div className="flex items-start gap-4">
+                        <img
+                            src="/assets/images/thumbnails/bca.png"
+                            alt="image"
+                            className="h-[60px] w-[81px] shrink-0"
+                        />
+                        <div>
+                            <h4 className="text-sm leading-[21px] text-items-grey">
+                                Bank Central Asia
+                            </h4>
+                            <strong className="font-semibold">9893981092</strong>
+                            <p className="text-sm leading-[21px] text-items-grey">
+                                PT Join Vapor Bontang
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex items-start gap-4">
+                        <img
+                            src="/assets/images/thumbnails/mandiri.png"
+                            alt="image"
+                            className="h-[60px] w-[81px] shrink-0"
+                        />
+                        <div>
+                            <h4 className="text-sm leading-[21px] text-items-grey">
+                                Bank Mandiri
+                            </h4>
+                            <strong className="font-semibold">193084820912</strong>
+                            <p className="text-sm leading-[21px] text-items-grey">
+                                PT Join Vapor Bontang
                             </p>
                         </div>
                     </div>
                 </div>
-            </section>
-            <section id="BankTransfer" className="px-5">
-                <div className="flex flex-col gap-5 rounded-3xl bg-white px-[14px] py-5">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-[10px]">
-                            <img
-                                src="/assets/images/icons/banktf.svg"
-                                alt="icon"
-                                className="size-[38px] shrink-0"
-                            />
-                            <div className="flex flex-col gap-1">
-                                <h3 className="font-semibold text-[#0C0422]">Bank Transfer</h3>
-                                <p className="text-sm leading-[21px] text-[#8C8582]">
-                                    Choose lorem dolor active
-                                </p>
-                            </div>
-                        </div>
-                        <button type="button" data-expand="BankTransferJ" className="shrink-0">
-                            <img
-                                src="/assets/images/icons/bottom.svg"
-                                alt="icon"
-                                className="size-6 shrink-0 transition-all duration-300"
-                            />
-                        </button>
-                    </div>
-                    <div id="BankTransferJ" className="flex flex-col gap-5">
-                        <div className="box h-[1px] w-full" />
-                        <div className="flex items-start gap-4">
-                            <img
-                                src="/assets/images/thumbnails/bca.png"
-                                alt="image"
-                                className="h-[60px] w-[81px] shrink-0"
-                            />
-                            <div>
-                                <h4 className="text-sm leading-[21px] text-items-grey">
-                                    Bank Central Asia
-                                </h4>
-                                <strong className="font-semibold">9893981092</strong>
-                                <p className="text-sm leading-[21px] text-items-grey">
-                                    PT Shayna Beauty
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex items-start gap-4">
-                            <img
-                                src="/assets/images/thumbnails/mandiri.png"
-                                alt="image"
-                                className="h-[60px] w-[81px] shrink-0"
-                            />
-                            <div>
-                                <h4 className="text-sm leading-[21px] text-items-grey">
-                                    Bank Mandiri
-                                </h4>
-                                <strong className="font-semibold">193084820912</strong>
-                                <p className="text-sm leading-[21px] text-items-grey">
-                                    PT Shayna Beauty
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            </AccordionSection>
             <form onSubmit={handleSubmit} className="flex flex-col gap-5 px-5">
                 <section id="PaymentConfirmation">
                     <div className="flex flex-col gap-5 rounded-3xl bg-white px-[14px] py-5">
@@ -596,9 +519,9 @@ export default function PaymentPage() {
                                 <div className="h-[calc(100%_-_2px)] w-[calc(100%_-_2px)] rounded-full bg-[#F6F6F8] transition-all duration-300 focus-within:h-[calc(100%_-_4px)] focus-within:w-[calc(100%_-_4px)]">
                                     <p
                                         id="upload"
-                                        className="absolute left-[57px] top-1/2 -translate-y-1/2 py-[15px] text-[#ACACB9]"
+                                        className={`absolute left-[57px] top-1/2 -translate-y-1/2 py-[15px] ${fileName ? 'text-[#030504]' : 'text-[#ACACB9]'}`}
                                     >
-                                        Add an attachment
+                                        {fileName ? fileName : 'upload Bukti Pembayaran'}
                                     </p>
                                     <input
                                         onChange={handleChange}
@@ -629,7 +552,7 @@ export default function PaymentPage() {
                             className="flex w-full items-center justify-between rounded-full bg-items-gradient-pink-white px-5 py-[14px] transition-all duration-300 hover:shadow-[0px_6px_22px_0px_#FF4D9E82]"
                         >
                             <strong className="font-semibold text-white">
-                                {loading ? "Mengirim..." : "Kirim Bukti Pembayaran"}
+                                {loading ? "Mengirim..." : "Kirim Transaksi"}
                             </strong>
                             <img
                                 src="/assets/images/icons/right.svg"

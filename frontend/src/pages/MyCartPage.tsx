@@ -384,29 +384,31 @@ export default function MyCartPage() {
                 <section id="BookingDetails">
                     <div className="flex flex-col gap-5 rounded-t-[30px] rounded-b-[30px] bg-white px-5 pb-[30px] pt-[30px]">
                         <h2 className="font-bold">Detail Keranjang</h2>
-                        <div className="flex flex-col gap-[6px]">
-                            <div className="relative h-[49px]">
-                                <input
-                                    placeholder="(Opsional) Masukkan Kode Diskon"
-                                    type="text"
-                                    value={discountCode || ""}
-                                    onChange={(e) => setDiscountCode(e.target.value)}
-                                    className="absolute w-full rounded-full bg-[#F6F6F8] py-[14px] pl-4 pr-[92px] font-semibold text-[#030504] placeholder:text-sm placeholder:font-normal placeholder:leading-[21px] placeholder:text-items-grey focus:outline-none"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={handleApplyDiscount}
-                                    className="absolute right-[6px] top-1/2 -translate-y-1/2 rounded-full bg-items-purple px-[14px] py-2 text-sm font-semibold leading-[21px] text-white"
-                                >
-                                    Kirim
-                                </button>
+                        {cart.length !== 0 && (
+                            <div className="flex flex-col gap-[6px]">
+                                <div className="relative h-[49px]">
+                                    <input
+                                        placeholder="(Opsional) Masukkan Kode Diskon"
+                                        type="text"
+                                        value={discountCode || ""}
+                                        onChange={(e) => setDiscountCode(e.target.value)}
+                                        className="absolute w-full rounded-full bg-[#F6F6F8] py-[14px] pl-4 pr-[92px] font-semibold text-[#030504] placeholder:text-sm placeholder:font-normal placeholder:leading-[21px] placeholder:text-items-grey focus:outline-none"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleApplyDiscount}
+                                        className="absolute right-[6px] top-1/2 -translate-y-1/2 rounded-full bg-items-purple px-[14px] py-2 text-sm font-semibold leading-[21px] text-white"
+                                    >
+                                        Kirim
+                                    </button>
+                                </div>
+                                {appliedDiscount && (
+                                    <p className="py-2 text-sm leading-[21px] text-items-grey">
+                                        {appliedDiscount.description}
+                                    </p>
+                                )}
                             </div>
-                            {appliedDiscount && (
-                                <p className="py-2 text-sm leading-[21px] text-items-grey">
-                                    {appliedDiscount.description}
-                                </p>
-                            )}
-                        </div>
+                        )}
                         <div className="box h-[1px] w-full" />
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-[6px]">
@@ -437,9 +439,9 @@ export default function MyCartPage() {
                                     alt="icon"
                                     className="size-5 shrink-0"
                                 />
-                                <p>Kode Diskon</p>
+                                <p>Pajak 0.3%</p>
                             </div>
-                            <strong className="font-semibold">{formatCurrency(discountAmount)}</strong>
+                            <strong className="font-semibold">{formatCurrency(tax)}</strong>
                         </div>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-[6px]">
@@ -448,9 +450,9 @@ export default function MyCartPage() {
                                     alt="icon"
                                     className="size-5 shrink-0"
                                 />
-                                <p>Pajak 0.3%</p>
+                                <p>Kode Diskon</p>
                             </div>
-                            <strong className="font-semibold">{formatCurrency(tax)}</strong>
+                            <strong className="font-semibold text-items-purple">- {formatCurrency(discountAmount)}</strong>
                         </div>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-[6px]">

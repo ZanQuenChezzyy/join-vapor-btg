@@ -67,7 +67,10 @@ class BillingDetailResource extends Resource
         }, 0);
 
         $total_tax_amount = round($subtotal * 0.003);
-        $total_amount = round($subtotal + $total_tax_amount);
+
+        $discount = (float) str_replace(',', '', $get('discount_amount'));
+
+        $total_amount = round($subtotal + $total_tax_amount - $discount);
         $total_quantity = $selectedItems->sum('quantity');
 
         $set('sub_total_amount', number_format($subtotal, 0, '.', ','));
@@ -174,7 +177,7 @@ class BillingDetailResource extends Resource
                                             ->addActionLabel('Tambah Barang')
                                             ->grid(2)
                                             ->columnSpanFull(),
-                                        Grid::make(12)
+                                        Grid::make(14)
                                             ->schema([
                                                 TextInput::make('quantity')
                                                     ->label('Total Kuantitas')
@@ -185,6 +188,7 @@ class BillingDetailResource extends Resource
                                                     ->maxValue(999)
                                                     ->disabled()
                                                     ->dehydrated()
+                                                    ->suffix('Unit')
                                                     ->columnSpan([
                                                         'default' => 12,
                                                         'lg' => 6,
@@ -235,6 +239,29 @@ class BillingDetailResource extends Resource
                                                         '2xl' => 3,
                                                     ])
                                                     ->required(),
+                                                TextInput::make('discount_amount')
+                                                    ->label('Total Diskon')
+                                                    ->placeholder('Total Diskon')
+                                                    ->hint('Jika Ada')
+                                                    ->step(50000)
+                                                    ->minLength(4)
+                                                    ->maxLength(11)
+                                                    ->minValue(0000)
+                                                    ->maxValue(99999999999)
+                                                    ->mask(RawJs::make('$money($input)'))
+                                                    ->stripCharacters(',')
+                                                    ->prefix('Rp')
+                                                    ->suffix('.00')
+                                                    ->disabled()
+                                                    ->dehydrated()
+                                                    ->columnSpan([
+                                                        'default' => 12,
+                                                        'lg' => 6,
+                                                        'xl' => 3,
+                                                        '2xl' => 3,
+                                                    ])
+                                                    ->numeric()
+                                                    ->default(0),
                                                 TextInput::make('total_amount')
                                                     ->label('Total Harga')
                                                     ->placeholder('Total Harga')
@@ -252,8 +279,8 @@ class BillingDetailResource extends Resource
                                                     ->columnSpan([
                                                         'default' => 12,
                                                         'lg' => 6,
-                                                        'xl' => 4,
-                                                        '2xl' => 4,
+                                                        'xl' => 3,
+                                                        '2xl' => 3,
                                                     ])
                                                     ->required(),
                                             ])

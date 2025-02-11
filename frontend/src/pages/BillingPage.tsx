@@ -122,7 +122,7 @@ export default function BillingPage() {
                                                 3
                                             </div>
                                             <p className="text-xs font-semibold leading-[18px]">
-                                                Pengiriman
+                                                Selesai
                                             </p>
                                         </div>
                                     </div>
@@ -337,7 +337,7 @@ export default function BillingPage() {
                         className="mt-[10px] flex w-full items-center justify-between rounded-full bg-items-gradient-pink-white px-5 py-[14px] transition-all duration-300 hover:shadow-[0px_6px_22px_0px_#FF4D9E82]"
                     >
                         <strong className="font-semibold text-white">
-                            Continue to Payment
+                            Lanjut Ke Pembayaran
                         </strong>
                         <img
                             src="/assets/images/icons/right.svg"
