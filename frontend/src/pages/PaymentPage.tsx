@@ -34,6 +34,7 @@ export default function PaymentPage() {
     const [fileName, setfileName] = useState<string | null>(null)
 
     const [appliedDiscount, setAppliedDiscount] = useState<Discount | null>(null);
+
     const [discountAmount, setDiscountAmount] = useState<number>(0);
 
     const TAX_RATE = 0.003;
